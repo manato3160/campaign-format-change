@@ -27,9 +27,9 @@ export const FORM_FIELDS: FormFieldConfig[] = [
 
     // Prizes
     { id: 'prize_1', label: '賞品名 1', defaultValue: '強力カビハイター ツンとしないタイプ', placeholder: 'A賞：デジタルギフト券', group: 'prizes' },
-    { id: 'prize_1_quantity', label: '賞品名 1 数量', defaultValue: '', placeholder: '10名様', group: 'prizes' },
-    { id: 'prize_2', label: '賞品名 2', defaultValue: '(不要なら空白)', placeholder: 'B賞：オリジナルTシャツ', group: 'prizes' },
-    { id: 'prize_2_quantity', label: '賞品名 2 数量', defaultValue: '', placeholder: '20名様', group: 'prizes' },
+    { id: 'prize_1_quantity', label: '賞品名 1 数量', defaultValue: '', placeholder: '10枚', group: 'prizes' },
+    { id: 'prize_2', label: '賞品名 2', defaultValue: '(不要なら空白)', placeholder: 'B賞：オリジナルリップクリーム', group: 'prizes' },
+    { id: 'prize_2_quantity', label: '賞品名 2 数量', defaultValue: '', placeholder: '5本', group: 'prizes' },
     { id: 'prize_3', label: '賞品名 3', defaultValue: '', placeholder: '（不要なら空白）', group: 'prizes' },
     { id: 'prize_3_quantity', label: '賞品名 3 数量', defaultValue: '', placeholder: '（不要なら空白）', group: 'prizes' },
     { id: 'prize_4', label: '賞品名 4', defaultValue: '', placeholder: '（不要なら空白）', group: 'prizes' },
@@ -658,19 +658,19 @@ export const DM_TEMPLATE = DM_TEMPLATES['X'];
 
 export const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
     'X/事後抽選': {
-        name: 'X / 事後抽選 規約',
+        name: 'X / 事後抽選',
         content: GUIDELINES_TEMPLATES['X']
     },
     'IG/事後抽選': {
-        name: 'Instagram / 事後抽選 規約',
+        name: 'Instagram / 事後抽選',
         content: GUIDELINES_TEMPLATES['IG']
     },
     'X/即時': {
-        name: 'X / 即時 規約',
+        name: 'X / 即時',
         content: GUIDELINES_TEMPLATES['X']
     },
     'TikTok/事後抽選': {
-        name: 'TikTok / 事後抽選 規約',
+        name: 'TikTok / 事後抽選',
         content: GUIDELINES_TEMPLATES['TikTok']
     }
 };

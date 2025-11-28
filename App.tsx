@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ClipboardCopy, Sparkles, CheckCircle2, RotateCcw, Trash2 } from 'lucide-react';
 import { Button } from './components/Button';
 import { Card } from './components/Card';
@@ -20,6 +20,7 @@ const App: React.FC = () => {
 
     const [formData, setFormData] = useState<CampaignData>(initialData);
     const [selectedTemplate, setSelectedTemplate] = useState<TemplateKey>('X/事後抽選');
+    const [selectedSocialPlatform, setSelectedSocialPlatform] = useState<'X' | 'IG' | 'TikTok' | ''>('');
     const [tosOutput, setTosOutput] = useState('');
     const [dmOutput, setDmOutput] = useState('');
     const [formOutput, setFormOutput] = useState('');
@@ -102,16 +103,62 @@ const App: React.FC = () => {
     };
 
     // Group fields for better UI organization
+    // 選択したテンプレートからプラットフォームを取得
+    const selectedPlatform = useMemo(() => {
+        return getPlatformFromTemplate(selectedTemplate);
+    }, [selectedTemplate]);
+
+    // 選択したSNS媒体に応じて利用可能なテンプレートをフィルタリング
+    const availableTemplates = useMemo(() => {
+        if (!selectedSocialPlatform) {
+            return Object.entries(TEMPLATES);
+        }
+        
+        return Object.entries(TEMPLATES).filter(([key]) => {
+            if (selectedSocialPlatform === 'X') {
+                return key === 'X/事後抽選' || key === 'X/即時';
+            } else if (selectedSocialPlatform === 'IG') {
+                return key === 'IG/事後抽選';
+            } else if (selectedSocialPlatform === 'TikTok') {
+                return key === 'TikTok/事後抽選';
+            }
+            return false;
+        });
+    }, [selectedSocialPlatform]);
+
+    // 選択したテンプレートが利用可能でない場合、最初の利用可能なテンプレートに自動変更
+    useEffect(() => {
+        if (selectedSocialPlatform && availableTemplates.length > 0) {
+            const availableKeys = availableTemplates.map(([key]) => key);
+            if (!availableKeys.includes(selectedTemplate)) {
+                setSelectedTemplate(availableKeys[0] as TemplateKey);
+            }
+        }
+    }, [selectedSocialPlatform, availableTemplates, selectedTemplate]);
+
     const groupedFields = useMemo(() => {
+        // SNSアカウントフィールドをフィルタリング（選択した媒体に応じて）
+        let socialFields: typeof FORM_FIELDS = [];
+        
+        // 選択したSNS媒体に応じてフィールドをフィルタリング
+        if (selectedSocialPlatform === 'X') {
+            socialFields = FORM_FIELDS.filter(f => f.group === 'social' && f.id.startsWith('x_'));
+        } else if (selectedSocialPlatform === 'IG') {
+            socialFields = FORM_FIELDS.filter(f => f.group === 'social' && f.id.startsWith('ig_'));
+        } else if (selectedSocialPlatform === 'TikTok') {
+            socialFields = FORM_FIELDS.filter(f => f.group === 'social' && f.id.startsWith('tiktok_'));
+        }
+        // selectedSocialPlatformが空の場合は空配列（非表示）
+
         const groups = {
             basic: FORM_FIELDS.filter(f => f.group === 'basic'),
             schedule: FORM_FIELDS.filter(f => f.group === 'schedule'),
             prizes: FORM_FIELDS.filter(f => f.group === 'prizes'),
             steps: FORM_FIELDS.filter(f => f.group === 'steps'),
-            social: FORM_FIELDS.filter(f => f.group === 'social'),
+            social: socialFields,
         };
         return groups;
-    }, []);
+    }, [selectedSocialPlatform]);
 
     // 日付と時間を結合して表示形式に変換
     const formatDateTime = (date: string, hour: string = '', minute: string = ''): string => {
@@ -167,9 +214,11 @@ const App: React.FC = () => {
 
         return (
         <div className="mb-6">
+            {title && (
             <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-3 border-b border-gray-200 pb-1">
                 {title}
             </h3>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* 日付と時間のフィールド */}
                     {Object.entries(dateTimeFields).map(([key, config]) => (
@@ -401,15 +450,15 @@ const App: React.FC = () => {
                         <div className="bg-blue-600 text-white p-1.5 rounded-lg">
                             <Sparkles size={20} />
                         </div>
-                        <h1 className="text-lg font-bold text-gray-900">4形式一括生成ツール</h1>
+                        <h1 className="text-lg font-bold text-gray-900">規約、DM、フォーム、同梱レター変換ツール</h1>
                     </div>
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" onClick={clearForm} icon={<Trash2 size={14} />}>
                             クリア
                         </Button>
-                        <Button variant="outline" size="sm" onClick={resetForm} icon={<RotateCcw size={14} />}>
-                            リセット
-                        </Button>
+                    <Button variant="outline" size="sm" onClick={resetForm} icon={<RotateCcw size={14} />}>
+                        リセット
+                    </Button>
                     </div>
                 </div>
             </header>
@@ -423,7 +472,30 @@ const App: React.FC = () => {
                                 {renderFieldGroup('日程', groupedFields.schedule)}
                                 {renderFieldGroup('賞品', groupedFields.prizes)}
                                 {renderFieldGroup('応募方法', groupedFields.steps)}
-                                {renderFieldGroup('SNSアカウント', groupedFields.social)}
+                                
+                                {/* SNSアカウントセクション（媒体選択付き） */}
+                                <div className="mb-6">
+                                    <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-3 border-b border-gray-200 pb-1">
+                                        SNSアカウント
+                                    </h3>
+                                    <div className="mb-4">
+                                        <label htmlFor="socialPlatform" className="block text-xs font-bold text-gray-700 mb-1">
+                                            媒体を選択
+                                        </label>
+                                        <select
+                                            id="socialPlatform"
+                                            value={selectedSocialPlatform}
+                                            onChange={(e) => setSelectedSocialPlatform(e.target.value as 'X' | 'IG' | 'TikTok' | '')}
+                                            className="block w-full p-2.5 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                        >
+                                            <option value="">選択してください</option>
+                                            <option value="X">X</option>
+                                            <option value="IG">Instagram</option>
+                                            <option value="TikTok">TikTok</option>
+                                        </select>
+                                    </div>
+                                    {selectedSocialPlatform && renderFieldGroup('', groupedFields.social)}
+                                </div>
                             </div>
                         </Card>
 
@@ -439,8 +511,9 @@ const App: React.FC = () => {
                                             className="block w-full p-2.5 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500"
                                             value={selectedTemplate}
                                             onChange={(e) => setSelectedTemplate(e.target.value as TemplateKey)}
+                                            disabled={!selectedSocialPlatform}
                                         >
-                                            {Object.entries(TEMPLATES).map(([key, config]) => (
+                                            {availableTemplates.map(([key, config]) => (
                                                 <option key={key} value={key}>{config.name}</option>
                                             ))}
                                         </select>

@@ -119,7 +119,7 @@
         "placeholder": "[賞品名1数量]",
         "systemPlaceholder": "[prize_1_quantity]",
         "label": "賞品名 1 数量",
-        "example": "10名様",
+        "example": "10枚",
         "group": "prizes",
         "description": "1つ目の賞品の数量",
         "optional": true
@@ -142,7 +142,7 @@
         "placeholder": "[賞品名2数量]",
         "systemPlaceholder": "[prize_2_quantity]",
         "label": "賞品名 2 数量",
-        "example": "20名様",
+        "example": "5本",
         "group": "prizes",
         "description": "2つ目の賞品の数量",
         "optional": true,
