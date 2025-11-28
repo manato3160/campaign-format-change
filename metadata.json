@@ -1,0 +1,5 @@
+{
+  "name": "Campaign Gen",
+  "description": "A tool to automatically generate Terms of Service and Direct Messages for social media campaigns based on spreadsheet data.",
+  "requestFramePermissions": []
+}

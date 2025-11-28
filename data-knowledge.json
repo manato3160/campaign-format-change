@@ -1,0 +1,595 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "createdAt": "2025-01-27",
+    "description": "キャンペーン応募規約・当選DM自動生成ツール用データナレッジ",
+    "source": "応募規約・当選DM 自動生成用マスターシート - シート1.csv"
+  },
+  "fieldMappings": {
+    "basic": [
+      {
+        "csvFieldName": "会社名",
+        "systemFieldId": "company_name",
+        "placeholder": "[会社名]",
+        "systemPlaceholder": "[company_name]",
+        "label": "会社名",
+        "example": "●●●株式会社",
+        "group": "basic",
+        "description": "キャンペーンを実施する企業名"
+      },
+      {
+        "csvFieldName": "キャンペーン名",
+        "systemFieldId": "campaign_name",
+        "placeholder": "[キャンペーン名]",
+        "systemPlaceholder": "[campaign_name]",
+        "label": "キャンペーン名",
+        "example": "●●●キャンペーン",
+        "group": "basic",
+        "description": "実施するキャンペーンの名称"
+      },
+      {
+        "csvFieldName": "プライバシーポリシーURL",
+        "systemFieldId": "privacy_policy_url",
+        "placeholder": "[プライバシーポリシーURL]",
+        "systemPlaceholder": "[privacy_policy_url]",
+        "label": "プライバシーポリシーURL",
+        "example": "https://privacy.example.com/",
+        "group": "basic",
+        "description": "企業のプライバシーポリシーページのURL"
+      }
+    ],
+    "schedule": [
+      {
+        "csvFieldName": "応募期間（開始）",
+        "systemFieldId": "start_date",
+        "placeholder": "[応募期間開始]",
+        "systemPlaceholder": "[start_date]",
+        "label": "応募期間（開始）",
+        "example": "2025年12月1日（月）10:00",
+        "group": "schedule",
+        "description": "キャンペーンの応募受付開始日時",
+        "formatNote": "CSVでは「2025年12月1日（月）10:00」形式、システムでは「2025/01/15」形式を使用可能"
+      },
+      {
+        "csvFieldName": "応募期間（終了）",
+        "systemFieldId": "end_date",
+        "placeholder": "[応募期間終了]",
+        "systemPlaceholder": "[end_date]",
+        "label": "応募期間（終了）",
+        "example": "2025年12月15日（月）23:59",
+        "group": "schedule",
+        "description": "キャンペーンの応募受付終了日時"
+      },
+      {
+        "csvFieldName": "当選DM送付予定日",
+        "systemFieldId": "dm_send_date",
+        "placeholder": "[DM送付日]",
+        "systemPlaceholder": "[dm_send_date]",
+        "label": "当選DM送付予定日",
+        "example": "2026年1月上旬頃",
+        "group": "schedule",
+        "description": "当選者へのDM送付予定日"
+      },
+      {
+        "csvFieldName": "フォーム入力締切日",
+        "systemFieldId": "form_deadline",
+        "placeholder": "[フォーム入力締切日]",
+        "systemPlaceholder": "[form_deadline]",
+        "label": "フォーム入力締切日",
+        "example": "2026年1月20日（火）",
+        "group": "schedule",
+        "description": "賞品送付先入力フォームの入力締切日"
+      },
+      {
+        "csvFieldName": "賞品発送予定日",
+        "systemFieldId": "shipping_date",
+        "placeholder": "[賞品発送日]",
+        "systemPlaceholder": "[shipping_date]",
+        "label": "賞品発送予定日",
+        "example": "2026年2月中旬",
+        "group": "schedule",
+        "description": "賞品の発送予定日"
+      },
+      {
+        "csvFieldName": "フォームURL",
+        "systemFieldId": "form_url",
+        "placeholder": "[フォームURL]",
+        "systemPlaceholder": "[form_url]",
+        "label": "フォームURL",
+        "example": "https://form.example.com/",
+        "group": "schedule",
+        "description": "賞品送付先入力フォームのURL"
+      }
+    ],
+    "prizes": [
+      {
+        "csvFieldName": "賞品名1",
+        "systemFieldId": "prize_1",
+        "placeholder": "[賞品名1]",
+        "systemPlaceholder": "[prize_1]",
+        "label": "賞品名 1",
+        "example": "A賞：デジタルギフト券",
+        "group": "prizes",
+        "description": "1つ目の賞品名",
+        "optional": false
+      },
+      {
+        "csvFieldName": "賞品名1数量",
+        "systemFieldId": "prize_1_quantity",
+        "placeholder": "[賞品名1数量]",
+        "systemPlaceholder": "[prize_1_quantity]",
+        "label": "賞品名 1 数量",
+        "example": "10名様",
+        "group": "prizes",
+        "description": "1つ目の賞品の数量",
+        "optional": true
+      },
+      {
+        "csvFieldName": "賞品名2",
+        "systemFieldId": "prize_2",
+        "placeholder": "[賞品名2]",
+        "systemPlaceholder": "[prize_2]",
+        "label": "賞品名 2",
+        "example": "B賞：オリジナルTシャツ",
+        "group": "prizes",
+        "description": "2つ目の賞品名",
+        "optional": true,
+        "emptyValue": "（不要なら空白）"
+      },
+      {
+        "csvFieldName": "賞品名2数量",
+        "systemFieldId": "prize_2_quantity",
+        "placeholder": "[賞品名2数量]",
+        "systemPlaceholder": "[prize_2_quantity]",
+        "label": "賞品名 2 数量",
+        "example": "20名様",
+        "group": "prizes",
+        "description": "2つ目の賞品の数量",
+        "optional": true,
+        "emptyValue": "（不要なら空白）"
+      },
+      {
+        "csvFieldName": "賞品名3",
+        "systemFieldId": "prize_3",
+        "placeholder": "[賞品名3]",
+        "systemPlaceholder": "[prize_3]",
+        "label": "賞品名 3",
+        "example": "（不要なら空白）",
+        "group": "prizes",
+        "description": "3つ目の賞品名",
+        "optional": true,
+        "emptyValue": "（不要なら空白）"
+      },
+      {
+        "csvFieldName": "賞品名3数量",
+        "systemFieldId": "prize_3_quantity",
+        "placeholder": "[賞品名3数量]",
+        "systemPlaceholder": "[prize_3_quantity]",
+        "label": "賞品名 3 数量",
+        "example": "（不要なら空白）",
+        "group": "prizes",
+        "description": "3つ目の賞品の数量",
+        "optional": true,
+        "emptyValue": "（不要なら空白）"
+      },
+      {
+        "csvFieldName": "賞品名4",
+        "systemFieldId": "prize_4",
+        "placeholder": "[賞品名4]",
+        "systemPlaceholder": "[prize_4]",
+        "label": "賞品名 4",
+        "example": "（不要なら空白）",
+        "group": "prizes",
+        "description": "4つ目の賞品名",
+        "optional": true,
+        "emptyValue": "（不要なら空白）"
+      },
+      {
+        "csvFieldName": "賞品名4数量",
+        "systemFieldId": "prize_4_quantity",
+        "placeholder": "[賞品名4数量]",
+        "systemPlaceholder": "[prize_4_quantity]",
+        "label": "賞品名 4 数量",
+        "example": "（不要なら空白）",
+        "group": "prizes",
+        "description": "4つ目の賞品の数量",
+        "optional": true,
+        "emptyValue": "（不要なら空白）"
+      },
+      {
+        "csvFieldName": "賞品名5",
+        "systemFieldId": "prize_5",
+        "placeholder": "[賞品名5]",
+        "systemPlaceholder": "[prize_5]",
+        "label": "賞品名 5",
+        "example": "（不要なら空白）",
+        "group": "prizes",
+        "description": "5つ目の賞品名",
+        "optional": true,
+        "emptyValue": "（不要なら空白）"
+      },
+      {
+        "csvFieldName": "賞品名5数量",
+        "systemFieldId": "prize_5_quantity",
+        "placeholder": "[賞品名5数量]",
+        "systemPlaceholder": "[prize_5_quantity]",
+        "label": "賞品名 5 数量",
+        "example": "（不要なら空白）",
+        "group": "prizes",
+        "description": "5つ目の賞品の数量",
+        "optional": true,
+        "emptyValue": "（不要なら空白）"
+      },
+      {
+        "csvFieldName": "合計人数",
+        "systemFieldId": "total_winners",
+        "placeholder": "[合計人数]",
+        "systemPlaceholder": "[total_winners]",
+        "label": "合計人数",
+        "example": "100名様",
+        "group": "prizes",
+        "description": "当選者の合計人数"
+      }
+    ],
+    "steps": [
+      {
+        "csvFieldName": "STEP2. 応募方法",
+        "systemFieldId": "step_2",
+        "placeholder": "[応募方法_STEP2]",
+        "systemPlaceholder": "[step_2]",
+        "label": "STEP2. 応募方法",
+        "example": "対象投稿に「いいね」とコメントを投稿",
+        "group": "steps",
+        "description": "2つ目の応募ステップ（STEP1はテンプレートに固定）",
+        "optional": false
+      },
+      {
+        "csvFieldName": "STEP3. 応募方法",
+        "systemFieldId": "step_3",
+        "placeholder": "[応募方法_STEP3]",
+        "systemPlaceholder": "[step_3]",
+        "label": "STEP3. 応募方法",
+        "example": "指定ハッシュタグを付けて投稿",
+        "group": "steps",
+        "description": "3つ目の応募ステップ",
+        "optional": true,
+        "emptyValue": "（不要なら空白）",
+        "systemPlaceholderForTemplate": "[STEP3_LINE]"
+      },
+      {
+        "csvFieldName": "STEP4. 応募方法",
+        "systemFieldId": "step_4",
+        "placeholder": "[応募方法_STEP4]",
+        "systemPlaceholder": "[step_4]",
+        "label": "STEP4. 応募方法",
+        "example": "（不要なら空白）",
+        "group": "steps",
+        "description": "4つ目の応募ステップ",
+        "optional": true,
+        "emptyValue": "（不要なら空白）",
+        "systemPlaceholderForTemplate": "[STEP4_LINE]"
+      },
+      {
+        "csvFieldName": "STEP5. 応募方法",
+        "systemFieldId": "step_5",
+        "placeholder": "[応募方法_STEP5]",
+        "systemPlaceholder": "[step_5]",
+        "label": "STEP5. 応募方法",
+        "example": "（不要なら空白）",
+        "group": "steps",
+        "description": "5つ目の応募ステップ",
+        "optional": true,
+        "emptyValue": "（不要なら空白）",
+        "systemPlaceholderForTemplate": "[STEP5_LINE]"
+      }
+    ],
+    "social": {
+      "line": [
+        {
+          "csvFieldName": "LINEアカウント名",
+          "systemFieldId": "line_name",
+          "placeholder": "[LINEアカウント名]",
+          "systemPlaceholder": "[line_name]",
+          "label": "LINE アカウント名",
+          "example": "●●●LINE公式アカウント",
+          "group": "social",
+          "description": "LINE公式アカウントの表示名",
+          "platform": "LINE",
+          "note": "現在のシステムには未実装"
+        },
+        {
+          "csvFieldName": "LINEアカウントID",
+          "systemFieldId": "line_id",
+          "placeholder": "[LINEアカウントID]",
+          "systemPlaceholder": "[line_id]",
+          "label": "LINE アカウント ID",
+          "example": "@line_id_example",
+          "group": "social",
+          "description": "LINE公式アカウントのID",
+          "platform": "LINE",
+          "note": "現在のシステムには未実装"
+        },
+        {
+          "csvFieldName": "LINEアカウントURL",
+          "systemFieldId": "line_url",
+          "placeholder": "[LINEアカウントURL]",
+          "systemPlaceholder": "[line_url]",
+          "label": "LINE アカウント URL",
+          "example": "https://line.example.com/",
+          "group": "social",
+          "description": "LINE公式アカウントのURL",
+          "platform": "LINE",
+          "note": "現在のシステムには未実装"
+        }
+      ],
+      "x": [
+        {
+          "csvFieldName": "Xアカウント名",
+          "systemFieldId": "x_name",
+          "placeholder": "[Xアカウント名]",
+          "systemPlaceholder": "[x_name]",
+          "label": "X アカウント名",
+          "example": "●●●キャンペーン事務局",
+          "group": "social",
+          "description": "X（旧Twitter）アカウントの表示名",
+          "platform": "X"
+        },
+        {
+          "csvFieldName": "XアカウントID",
+          "systemFieldId": "x_id",
+          "placeholder": "[XアカウントID]",
+          "systemPlaceholder": "[x_id]",
+          "label": "X アカウント ID",
+          "example": "@X_id_example",
+          "group": "social",
+          "description": "X（旧Twitter）アカウントのID",
+          "platform": "X"
+        },
+        {
+          "csvFieldName": "XアカウントURL",
+          "systemFieldId": "x_url",
+          "placeholder": "[XアカウントURL]",
+          "systemPlaceholder": "[x_url]",
+          "label": "X アカウント URL",
+          "example": "https://x.com/X_id_example",
+          "group": "social",
+          "description": "X（旧Twitter）アカウントのURL",
+          "platform": "X"
+        }
+      ],
+      "instagram": [
+        {
+          "csvFieldName": "IGアカウント名",
+          "systemFieldId": "ig_name",
+          "placeholder": "[IGアカウント名]",
+          "systemPlaceholder": "[ig_name]",
+          "label": "IG アカウント名",
+          "example": "●●●キャンペーン事務局",
+          "group": "social",
+          "description": "Instagramアカウントの表示名",
+          "platform": "Instagram"
+        },
+        {
+          "csvFieldName": "IGアカウントID",
+          "systemFieldId": "ig_id",
+          "placeholder": "[IGアカウントID]",
+          "systemPlaceholder": "[ig_id]",
+          "label": "IG アカウント ID",
+          "example": "@ig_id_example",
+          "group": "social",
+          "description": "InstagramアカウントのID",
+          "platform": "Instagram"
+        },
+        {
+          "csvFieldName": "IGアカウントURL",
+          "systemFieldId": "ig_url",
+          "placeholder": "[IGアカウントURL]",
+          "systemPlaceholder": "[ig_url]",
+          "label": "IG アカウント URL",
+          "example": "https://instagram.com/ig_id_example",
+          "group": "social",
+          "description": "InstagramアカウントのURL",
+          "platform": "Instagram"
+        }
+      ],
+      "tiktok": [
+        {
+          "csvFieldName": "TikTokアカウント名",
+          "systemFieldId": "tiktok_name",
+          "placeholder": "[TikTokアカウント名]",
+          "systemPlaceholder": "[tiktok_name]",
+          "label": "TikTok アカウント名",
+          "example": "●●●キャンペーン事務局",
+          "group": "social",
+          "description": "TikTokアカウントの表示名",
+          "platform": "TikTok"
+        },
+        {
+          "csvFieldName": "TikTokアカウントID",
+          "systemFieldId": "tiktok_id",
+          "placeholder": "[TikTokアカウントID]",
+          "systemPlaceholder": "[tiktok_id]",
+          "label": "TikTok アカウント ID",
+          "example": "@tiktok_id_example",
+          "group": "social",
+          "description": "TikTokアカウントのID",
+          "platform": "TikTok"
+        },
+        {
+          "csvFieldName": "TikTokアカウントURL",
+          "systemFieldId": "tiktok_url",
+          "placeholder": "[TikTokアカウントURL]",
+          "systemPlaceholder": "[tiktok_url]",
+          "label": "TikTok アカウント URL",
+          "example": "https://tiktok.com/@tiktok_id_example",
+          "group": "social",
+          "description": "TikTokアカウントのURL",
+          "platform": "TikTok"
+        }
+      ]
+    }
+  },
+  "templateKeys": {
+    "platforms": ["LINE", "X", "IG", "TikTok"],
+    "lotteryTypes": [
+      {
+        "key": "IG/事後抽選",
+        "name": "Instagram / 事後抽選 規約",
+        "platform": "Instagram",
+        "type": "事後抽選",
+        "description": "Instagramでの事後抽選キャンペーン用テンプレート"
+      },
+      {
+        "key": "X/事後抽選",
+        "name": "X / 事後抽選 規約",
+        "platform": "X",
+        "type": "事後抽選",
+        "description": "X（旧Twitter）での事後抽選キャンペーン用テンプレート"
+      },
+      {
+        "key": "X/即時",
+        "name": "X / 即時 規約",
+        "platform": "X",
+        "type": "即時",
+        "description": "X（旧Twitter）での即時抽選キャンペーン用テンプレート"
+      },
+      {
+        "key": "TikTok/事後抽選",
+        "name": "TikTok / 事後抽選 規約",
+        "platform": "TikTok",
+        "type": "事後抽選",
+        "description": "TikTokでの事後抽選キャンペーン用テンプレート"
+      },
+      {
+        "key": "TikTok/即時",
+        "name": "TikTok / 即時 規約",
+        "platform": "TikTok",
+        "type": "即時",
+        "description": "TikTokでの即時抽選キャンペーン用テンプレート（CSVには記載あり、システムには未実装）",
+        "note": "現在のシステムには未実装"
+      },
+      {
+        "key": "LINE/事後抽選",
+        "name": "LINE / 事後抽選 規約",
+        "platform": "LINE",
+        "type": "事後抽選",
+        "description": "LINEでの事後抽選キャンペーン用テンプレート（CSVには記載あり、システムには未実装）",
+        "note": "現在のシステムには未実装"
+      }
+    ]
+  },
+  "specialPlaceholders": {
+    "prizeListDisplay": {
+      "description": "応募規約テンプレートで使用される賞品リストの表示用プレースホルダー",
+      "placeholder": "[PRIZE_LIST_DISPLAY]",
+      "generationLogic": "prize_1からprize_5までを「、」で結合し、空欄や「（不要なら空白）」を除外",
+      "example": "A賞：デジタルギフト券、B賞：オリジナルTシャツ"
+    },
+    "prizeLines": {
+      "description": "当選DMテンプレートで使用される賞品行のプレースホルダー",
+      "placeholders": [
+        "[PRIZE_LINE_1]",
+        "[PRIZE_LINE_2]",
+        "[PRIZE_LINE_3]",
+        "[PRIZE_LINE_4]",
+        "[PRIZE_LINE_5]"
+      ],
+      "generationLogic": "各賞品が空欄または「（不要なら空白）」の場合は、その行全体を削除",
+      "mapping": {
+        "[PRIZE_LINE_1]": "prize_1",
+        "[PRIZE_LINE_2]": "prize_2",
+        "[PRIZE_LINE_3]": "prize_3",
+        "[PRIZE_LINE_4]": "prize_4",
+        "[PRIZE_LINE_5]": "prize_5"
+      },
+      "quantityPlaceholders": {
+        "description": "各賞品の数量を表示するためのプレースホルダー",
+        "placeholders": [
+          "[PRIZE_QUANTITY_1]",
+          "[PRIZE_QUANTITY_2]",
+          "[PRIZE_QUANTITY_3]",
+          "[PRIZE_QUANTITY_4]",
+          "[PRIZE_QUANTITY_5]"
+        ],
+        "mapping": {
+          "[PRIZE_QUANTITY_1]": "prize_1_quantity",
+          "[PRIZE_QUANTITY_2]": "prize_2_quantity",
+          "[PRIZE_QUANTITY_3]": "prize_3_quantity",
+          "[PRIZE_QUANTITY_4]": "prize_4_quantity",
+          "[PRIZE_QUANTITY_5]": "prize_5_quantity"
+        },
+        "note": "数量が空欄の場合は表示しない"
+      }
+    },
+    "stepLines": {
+      "description": "応募規約テンプレートで使用される応募ステップ行のプレースホルダー",
+      "placeholders": [
+        "[STEP3_LINE]",
+        "[STEP4_LINE]",
+        "[STEP5_LINE]"
+      ],
+      "generationLogic": "各ステップが空欄の場合は、その行全体を削除。値がある場合は「STEPn：[内容]」形式に置換",
+      "mapping": {
+        "[STEP3_LINE]": "step_3",
+        "[STEP4_LINE]": "step_4",
+        "[STEP5_LINE]": "step_5"
+      }
+    }
+  },
+  "placeholderMapping": {
+    "csvToSystem": {
+      "[会社名]": "[company_name]",
+      "[キャンペーン名]": "[campaign_name]",
+      "[プライバシーポリシーURL]": "[privacy_policy_url]",
+      "[応募期間開始]": "[start_date]",
+      "[応募期間終了]": "[end_date]",
+      "[DM送付日]": "[dm_send_date]",
+      "[フォーム入力締切日]": "[form_deadline]",
+      "[賞品発送日]": "[shipping_date]",
+      "[フォームURL]": "[form_url]",
+      "[賞品名1]": "[prize_1]",
+      "[賞品名1数量]": "[prize_1_quantity]",
+      "[賞品名2]": "[prize_2]",
+      "[賞品名2数量]": "[prize_2_quantity]",
+      "[賞品名3]": "[prize_3]",
+      "[賞品名3数量]": "[prize_3_quantity]",
+      "[賞品名4]": "[prize_4]",
+      "[賞品名4数量]": "[prize_4_quantity]",
+      "[賞品名5]": "[prize_5]",
+      "[賞品名5数量]": "[prize_5_quantity]",
+      "[合計人数]": "[total_winners]",
+      "[応募方法_STEP2]": "[step_2]",
+      "[応募方法_STEP3]": "[step_3]",
+      "[応募方法_STEP4]": "[step_4]",
+      "[応募方法_STEP5]": "[step_5]",
+      "[LINEアカウント名]": "[line_name]",
+      "[LINEアカウントID]": "[line_id]",
+      "[LINEアカウントURL]": "[line_url]",
+      "[Xアカウント名]": "[x_name]",
+      "[XアカウントID]": "[x_id]",
+      "[XアカウントURL]": "[x_url]",
+      "[IGアカウント名]": "[ig_name]",
+      "[IGアカウントID]": "[ig_id]",
+      "[IGアカウントURL]": "[ig_url]",
+      "[TikTokアカウント名]": "[tiktok_name]",
+      "[TikTokアカウントID]": "[tiktok_id]",
+      "[TikTokアカウントURL]": "[tiktok_url]"
+    }
+  },
+  "notes": {
+    "dateFormat": {
+      "csv": "2025年12月1日（月）10:00 形式",
+      "system": "2025/01/15 形式",
+      "description": "CSVでは詳細な日時形式、システムでは簡潔な形式を使用可能"
+    },
+    "emptyValueHandling": {
+      "description": "空欄や「（不要なら空白）」の値は、生成時に該当行を削除する",
+      "targets": ["賞品名2-5", "賞品名2-5数量", "STEP3-5", "各種SNSアカウント情報"]
+    },
+    "missingFeatures": {
+      "LINE": "LINEプラットフォーム対応はCSVには記載されているが、現在のシステムには未実装",
+      "TikTok/即時": "TikTok即時抽選テンプレートはCSVには記載されているが、現在のシステムには未実装"
+    }
+  }
+}
+
