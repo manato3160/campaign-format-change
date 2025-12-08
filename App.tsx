@@ -21,6 +21,13 @@ const App: React.FC = () => {
     const [formData, setFormData] = useState<CampaignData>(initialData);
     const [selectedTemplate, setSelectedTemplate] = useState<TemplateKey>('X/事後抽選');
     const [selectedSocialPlatform, setSelectedSocialPlatform] = useState<'X' | 'IG' | 'TikTok' | ''>('');
+    const [generateFormats, setGenerateFormats] = useState({
+        tos: true,
+        dm: true,
+        form: true,
+        enclosedLetter: true,
+    });
+    const [contactMethod, setContactMethod] = useState<'DM' | 'email'>('DM');
     const [tosOutput, setTosOutput] = useState('');
     const [dmOutput, setDmOutput] = useState('');
     const [formOutput, setFormOutput] = useState('');
@@ -38,20 +45,38 @@ const App: React.FC = () => {
         // プラットフォームを取得
         const platform = getPlatformFromTemplate(selectedTemplate);
         
-        // 4形式を生成
-        const tos = generateGuidelines(TEMPLATES[selectedTemplate].content, formData);
-        const dm = generateDM(DM_TEMPLATES[platform === 'IG_X' ? 'X' : platform], formData);
-        const form = generateForm(FORM_TEMPLATE, formData, platform);
-        const enclosedLetter = generateEnclosedLetter(
-            ENCLOSED_LETTER_TEMPLATES[platform === 'IG_X' ? 'X' : platform] || ENCLOSED_LETTER_TEMPLATES['X'],
-            formData,
-            platform
-        );
+        // チェックがついている形式のみ生成
+        if (generateFormats.tos) {
+            const tos = generateGuidelines(TEMPLATES[selectedTemplate].content, formData, selectedTemplate, contactMethod);
+            setTosOutput(tos);
+        } else {
+            setTosOutput('');
+        }
         
-        setTosOutput(tos);
-        setDmOutput(dm);
-        setFormOutput(form);
-        setEnclosedLetterOutput(enclosedLetter);
+        if (generateFormats.dm) {
+            const dm = generateDM(DM_TEMPLATES[platform === 'IG_X' ? 'X' : platform], formData, platform);
+            setDmOutput(dm);
+        } else {
+            setDmOutput('');
+        }
+        
+        if (generateFormats.form) {
+            const form = generateForm(FORM_TEMPLATE, formData, platform);
+            setFormOutput(form);
+        } else {
+            setFormOutput('');
+        }
+        
+        if (generateFormats.enclosedLetter) {
+            const enclosedLetter = generateEnclosedLetter(
+                ENCLOSED_LETTER_TEMPLATES[platform === 'IG_X' ? 'X' : platform] || ENCLOSED_LETTER_TEMPLATES['X'],
+                formData,
+                platform
+            );
+            setEnclosedLetterOutput(enclosedLetter);
+        } else {
+            setEnclosedLetterOutput('');
+        }
     };
 
     const handleCopy = (text: string, type: 'tos' | 'dm' | 'form' | 'enclosedLetter') => {
@@ -80,6 +105,13 @@ const App: React.FC = () => {
     const resetForm = () => {
         if (confirm('入力内容を初期値に戻しますか？')) {
             setFormData(initialData);
+            setGenerateFormats({
+                tos: true,
+                dm: true,
+                form: true,
+                enclosedLetter: true,
+            });
+            setContactMethod('DM');
             setTosOutput('');
             setDmOutput('');
             setFormOutput('');
@@ -95,6 +127,13 @@ const App: React.FC = () => {
                 emptyData[field.id] = '';
             });
             setFormData(emptyData);
+            setGenerateFormats({
+                tos: true,
+                dm: true,
+                form: true,
+                enclosedLetter: true,
+            });
+            setContactMethod('DM');
             setTosOutput('');
             setDmOutput('');
             setFormOutput('');
@@ -495,6 +534,21 @@ const App: React.FC = () => {
                                         </select>
                                     </div>
                                     {selectedSocialPlatform && renderFieldGroup('', groupedFields.social)}
+                                    
+                                    {/* お問い合わせメールアドレス入力欄 */}
+                                    <div className="mt-4">
+                                        <label htmlFor="contact_email" className="block text-xs font-bold text-gray-700 mb-1">
+                                            お問い合わせメールアドレス（任意）
+                                        </label>
+                                        <input
+                                            type="email"
+                                            id="contact_email"
+                                            value={formData.contact_email || ''}
+                                            onChange={(e) => handleInputChange('contact_email', e.target.value)}
+                                            className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
+                                            placeholder="example@example.com"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </Card>
@@ -518,13 +572,86 @@ const App: React.FC = () => {
                                             ))}
                                         </select>
                                     </div>
+                                    
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                                            生成する形式を選択
+                                        </label>
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <label className="flex items-center cursor-pointer flex-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={generateFormats.tos}
+                                                        onChange={(e) => setGenerateFormats(prev => ({ ...prev, tos: e.target.checked }))}
+                                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                                    />
+                                                    <span className="ml-2 text-sm text-gray-700">応募規約</span>
+                                                </label>
+                                                {generateFormats.tos && (
+                                                    <div className="flex items-center gap-3 ml-4">
+                                                        <label className="flex items-center cursor-pointer">
+                                                            <input
+                                                                type="radio"
+                                                                name="contactMethod"
+                                                                value="DM"
+                                                                checked={contactMethod === 'DM'}
+                                                                onChange={(e) => setContactMethod(e.target.value as 'DM' | 'email')}
+                                                                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                            />
+                                                            <span className="ml-1 text-xs text-gray-600">DM</span>
+                                                        </label>
+                                                        <label className="flex items-center cursor-pointer">
+                                                            <input
+                                                                type="radio"
+                                                                name="contactMethod"
+                                                                value="email"
+                                                                checked={contactMethod === 'email'}
+                                                                onChange={(e) => setContactMethod(e.target.value as 'DM' | 'email')}
+                                                                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                            />
+                                                            <span className="ml-1 text-xs text-gray-600">メール</span>
+                                                        </label>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <label className="flex items-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={generateFormats.dm}
+                                                    onChange={(e) => setGenerateFormats(prev => ({ ...prev, dm: e.target.checked }))}
+                                                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                                />
+                                                <span className="ml-2 text-sm text-gray-700">当選DM</span>
+                                            </label>
+                                            <label className="flex items-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={generateFormats.form}
+                                                    onChange={(e) => setGenerateFormats(prev => ({ ...prev, form: e.target.checked }))}
+                                                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                                />
+                                                <span className="ml-2 text-sm text-gray-700">当選者用フォーム</span>
+                                            </label>
+                                            <label className="flex items-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={generateFormats.enclosedLetter}
+                                                    onChange={(e) => setGenerateFormats(prev => ({ ...prev, enclosedLetter: e.target.checked }))}
+                                                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                                />
+                                                <span className="ml-2 text-sm text-gray-700">同梱レター</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
                                     <Button 
                                         variant="primary" 
                                         className="w-full justify-center py-3 text-base font-bold shadow-lg shadow-blue-600/20" 
                                         onClick={handleGenerate}
                                         icon={<Sparkles size={18} />}
                                     >
-                                4形式を一括生成
+                                        選択した形式を生成
                                     </Button>
                                 </div>
                             </Card>
@@ -536,6 +663,7 @@ const App: React.FC = () => {
                         </div>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                 {/* ToS Output */}
+                            {generateFormats.tos && (
                             <Card title="" className="h-full flex flex-col">
                                 <div className="flex justify-between items-center mb-2">
                                     <label className="text-sm font-bold text-gray-700">応募規約</label>
@@ -564,11 +692,12 @@ const App: React.FC = () => {
                                         readOnly
                                         value={tosOutput}
                                         placeholder="左側のボタンを押すとここに生成されます"
-                                        onClick={(e) => e.currentTarget.select()}
                                     />
                             </Card>
+                            )}
 
                                 {/* DM Output */}
+                            {generateFormats.dm && (
                             <Card title="" className="h-full flex flex-col">
                                 <div className="flex justify-between items-center mb-2">
                                     <label className="text-sm font-bold text-gray-700">当選DM</label>
@@ -597,11 +726,12 @@ const App: React.FC = () => {
                                         readOnly
                                         value={dmOutput}
                                         placeholder="左側のボタンを押すとここに生成されます"
-                                        onClick={(e) => e.currentTarget.select()}
                                     />
                             </Card>
+                            )}
 
                             {/* Form Output */}
+                            {generateFormats.form && (
                             <Card title="" className="h-full flex flex-col">
                                 <div className="flex justify-between items-center mb-2">
                                     <label className="text-sm font-bold text-gray-700">当選者用フォーム</label>
@@ -630,11 +760,12 @@ const App: React.FC = () => {
                                     readOnly
                                     value={formOutput}
                                     placeholder="左側のボタンを押すとここに生成されます"
-                                    onClick={(e) => e.currentTarget.select()}
                                 />
                             </Card>
+                            )}
 
                             {/* Enclosed Letter Output */}
+                            {generateFormats.enclosedLetter && (
                             <Card title="" className="h-full flex flex-col">
                                 <div className="flex justify-between items-center mb-2">
                                     <label className="text-sm font-bold text-gray-700">同梱レター</label>
@@ -663,9 +794,9 @@ const App: React.FC = () => {
                                     readOnly
                                     value={enclosedLetterOutput}
                                     placeholder="左側のボタンを押すとここに生成されます"
-                                    onClick={(e) => e.currentTarget.select()}
                                 />
                         </Card>
+                        )}
                         </div>
                     </div>
                 </div>

@@ -1,5 +1,6 @@
 
-import { CampaignData, Platform } from '../types';
+import { CampaignData, Platform, TemplateKey } from '../types';
+import { getPlatformFromTemplate } from '../constants';
 
 // 日本語プレースホルダー→英語IDのマッピング
 const PLACEHOLDER_MAPPING: Record<string, string> = {
@@ -32,6 +33,8 @@ const PLACEHOLDER_MAPPING: Record<string, string> = {
     '[TikTokアカウント名]': '[tiktok_name]',
     '[TikTokアカウントID]': '[tiktok_id]',
     '[TikTokアカウントURL]': '[tiktok_url]',
+    '[お問い合わせメールアドレス]': '[contact_email]',
+    '[フォーム注意書き]': '[form_note]',
     '[応募方法_STEP2]': '[step_2]',
     '[応募方法_STEP3]': '[step_3]',
     '[応募方法_STEP4]': '[step_4]',
@@ -210,7 +213,8 @@ const processStepLines = (template: string, data: CampaignData): string => {
 
     steps.forEach(step => {
         if (step.content && step.content.trim()) {
-            processed = processed.replace(new RegExp(step.tag, 'g'), `STEP${step.num}：${step.content}`);
+            // テンプレートに既に「**STEP3：**」が含まれているため、STEP番号は付けずに内容だけを置換
+            processed = processed.replace(new RegExp(step.tag, 'g'), step.content);
         } else {
             // タグを含む行全体を削除
             const lineToRemove = new RegExp(`.*${step.tag}.*\\n?`, 'g');
@@ -251,15 +255,66 @@ const processPrizeLines = (template: string, data: CampaignData, includeQuantity
     return processed;
 };
 
-// 賞品リスト表示の処理（規約用）
+// 賞品リスト表示の処理（規約用、箇条書き形式）
 const processPrizeListDisplay = (template: string, data: CampaignData): string => {
-    const prizeList = preparePrizeList(data);
-    // 日本語プレースホルダーのまま置換
-    return template.replace(/\[賞品名1\] \[賞品名2\] \[賞品名3\] \[賞品名4\] \[賞品名5\]/g, prizeList);
+    let processed = template;
+    const prizes = [
+        { tag: '\\[賞品名1\\]', quantityTag: '\\[賞品名1数量\\]', content: data.prize_1, quantity: data.prize_1_quantity },
+        { tag: '\\[賞品名2\\]', quantityTag: '\\[賞品名2数量\\]', content: data.prize_2, quantity: data.prize_2_quantity },
+        { tag: '\\[賞品名3\\]', quantityTag: '\\[賞品名3数量\\]', content: data.prize_3, quantity: data.prize_3_quantity },
+        { tag: '\\[賞品名4\\]', quantityTag: '\\[賞品名4数量\\]', content: data.prize_4, quantity: data.prize_4_quantity },
+        { tag: '\\[賞品名5\\]', quantityTag: '\\[賞品名5数量\\]', content: data.prize_5, quantity: data.prize_5_quantity },
+    ];
+
+    // 有効な賞品の数をカウント
+    const validPrizes = prizes.filter(prize => {
+        const val = prize.content ? prize.content.trim() : '';
+        return val && val !== '（不要なら空白）' && val !== '(不要なら空白)';
+    });
+    const prizeCount = validPrizes.length;
+
+    prizes.forEach(prize => {
+        const val = prize.content ? prize.content.trim() : '';
+        if (val && val !== '（不要なら空白）' && val !== '(不要なら空白)') {
+            // 賞品名を置換
+            processed = processed.replace(new RegExp(prize.tag, 'g'), val);
+            // 数量を置換（数量がある場合のみ）
+            const quantityVal = prize.quantity ? prize.quantity.trim() : '';
+            if (quantityVal && quantityVal !== '（不要なら空白）' && quantityVal !== '(不要なら空白)') {
+                processed = processed.replace(new RegExp(prize.quantityTag, 'g'), quantityVal);
+            } else {
+                // 数量がない場合は数量タグを削除
+                processed = processed.replace(new RegExp(prize.quantityTag, 'g'), '');
+            }
+        } else {
+            // 空の賞品の行全体を削除（・[賞品名X][賞品名X数量]の行）
+            const lineToRemove = new RegExp(`・\\s*${prize.tag}\\s*${prize.quantityTag}\\s*\\n?`, 'g');
+            processed = processed.replace(lineToRemove, '');
+        }
+    });
+
+    // 賞品の数に応じて「を合計」または「のセットを合計」に変更
+    if (prizeCount === 1) {
+        // 賞品が1つの場合: 「を合計[合計人数]名様にプレゼント」
+        // 「のセットを合計」がある場合は「を合計」に変更
+        processed = processed.replace(/のセットを合計\[合計人数\]名様にプレゼント/g, 'を合計[合計人数]名様にプレゼント');
+        // IG_Xの場合の「（当選者数は X・Instagram の合計）のセットを合計」も処理
+        processed = processed.replace(/（当選者数は X・Instagram の合計）のセットを合計\[合計人数\]名様にプレゼント/g, '（当選者数は X・Instagram の合計）を合計[合計人数]名様にプレゼント');
+    } else if (prizeCount > 1) {
+        // 賞品が複数の場合: 「のセットを合計[合計人数]名様にプレゼント」
+        // 通常の「を合計」を「のセットを合計」に変更（既に「のセット」がある場合はスキップ）
+        if (!processed.includes('のセットを合計[合計人数]名様にプレゼント')) {
+            processed = processed.replace(/を合計\[合計人数\]名様にプレゼント/g, 'のセットを合計[合計人数]名様にプレゼント');
+        }
+        // IG_Xの場合の「（当選者数は X・Instagram の合計）を合計」も処理
+        processed = processed.replace(/（当選者数は X・Instagram の合計）を合計\[合計人数\]名様にプレゼント/g, '（当選者数は X・Instagram の合計）のセットを合計[合計人数]名様にプレゼント');
+    }
+
+    return processed;
 };
 
 // 応募規約生成
-export const generateGuidelines = (templateContent: string, data: CampaignData): string => {
+export const generateGuidelines = (templateContent: string, data: CampaignData, templateKey?: TemplateKey, contactMethod: 'DM' | 'email' = 'DM'): string => {
     let processed = templateContent;
     
     // 賞品リスト表示の処理（日本語プレースホルダー変換前に実行）
@@ -267,6 +322,52 @@ export const generateGuidelines = (templateContent: string, data: CampaignData):
     
     // ステップ行の処理（日本語プレースホルダー変換前に実行）
     processed = processStepLines(processed, data);
+    
+    // 「X / 即時」テンプレートの場合、DM送付時期の記載を削除
+    if (templateKey === 'X/即時') {
+        // DM送付時期を含む行全体を、賞品発送時期のみの記載に置換
+        processed = processed.replace(
+            /※当選をお知らせするXからのダイレクトメッセージの送付は\[DM送付日\]以降、賞品の発送は\[賞品発送日\]以降を予定しておりますが、諸事情により遅れる場合がございます。/g,
+            '※賞品の発送は[賞品発送日]以降を予定しておりますが、諸事情により遅れる場合がございます。'
+        );
+    }
+    
+    // お問い合わせ方法の処理（DM/メール）
+    if (contactMethod === 'email') {
+        // DM用の記載をメール用に置換
+        const platform = templateKey ? getPlatformFromTemplate(templateKey) : null;
+        if (platform) {
+            // 各プラットフォームのDM用記載をメール用に置換
+            if (platform === 'X' || platform === 'IG_X') {
+                processed = processed.replace(
+                    /\[キャンペーン名\]公式Xアカウント「\[XアカウントID\]」へダイレクトメッセージでお問い合わせください。/g,
+                    '[お問い合わせメールアドレス]へメールでお問い合わせください。'
+                );
+            }
+            if (platform === 'IG' || platform === 'IG_X') {
+                processed = processed.replace(
+                    /\[キャンペーン名\]公式Instagramアカウント「\[IGアカウントID\]」へダイレクトメッセージでお問い合わせください。/g,
+                    '[お問い合わせメールアドレス]へメールでお問い合わせください。'
+                );
+            }
+            if (platform === 'TikTok') {
+                processed = processed.replace(
+                    /\[キャンペーン名\]公式TikTokアカウント「\[TikTokアカウントID\]」へダイレクトメッセージでお問い合わせください。/g,
+                    '[お問い合わせメールアドレス]へメールでお問い合わせください。'
+                );
+            }
+            // IG_Xの場合の複数アカウント記載も処理
+            processed = processed.replace(
+                /本キャンペーンに関するお問い合わせは、各公式アカウントへダイレクトメッセージにてお問い合わせください。\s*\n\s*\*\*\[キャンペーン名\]キャンペーン事務局\*\*\s*\n\s*-\s*\[キャンペーン名\]公式X（\[XアカウントID\]）\s*\n\s*-\s*\[キャンペーン名\]公式Instagram（\[IGアカウントID\]）/g,
+                '[キャンペーン名]キャンペーン事務局\n\n[お問い合わせメールアドレス]へメールでお問い合わせください。'
+            );
+            // IG_Xの場合の別パターン（改行が異なる場合）
+            processed = processed.replace(
+                /本キャンペーンに関するお問い合わせは、各公式アカウントへダイレクトメッセージにてお問い合わせください。[\s\S]*?\*\*\[キャンペーン名\]キャンペーン事務局\*\*[\s\S]*?-\s*\[キャンペーン名\]公式X（\[XアカウントID\]）[\s\S]*?-\s*\[キャンペーン名\]公式Instagram（\[IGアカウントID\]）/g,
+                '[キャンペーン名]キャンペーン事務局\n\n[お問い合わせメールアドレス]へメールでお問い合わせください。'
+            );
+        }
+    }
     
     // 日本語プレースホルダーを英語IDに変換
     processed = convertJapanesePlaceholders(processed);
@@ -281,11 +382,19 @@ export const generateGuidelines = (templateContent: string, data: CampaignData):
 };
 
 // 当選DM生成
-export const generateDM = (templateContent: string, data: CampaignData): string => {
+export const generateDM = (templateContent: string, data: CampaignData, platform?: Platform): string => {
     let processed = templateContent;
 
     // 賞品行の処理（数量を含む、日本語プレースホルダー変換前に実行）
     processed = processPrizeLines(processed, data, true);
+    
+    // Instagram以外の媒体の場合、「※URLが表示されていない場合は、上部に表示されているプレビューをタップしてください。」の文言を削除
+    if (platform && platform !== 'IG') {
+        processed = processed.replace(
+            /※URLが表示されていない場合は、上部に表示されているプレビューをタップしてください。\s*\n?/g,
+            ''
+        );
+    }
     
     // 日本語プレースホルダーを英語IDに変換
     processed = convertJapanesePlaceholders(processed);
@@ -312,8 +421,13 @@ export const generateForm = (templateContent: string, data: CampaignData, platfo
     };
     const platformName = platformNames[platform] || 'X';
     
-    // プラットフォーム名を置換（Instagramのアカウント名 → Xのアカウント名 など）
-    processed = processed.replace(/Instagramのアカウント名/g, `${platformName}のアカウント名`);
+    // フォーム注意書きの処理（日本語プレースホルダー変換前に実行）
+    if (data.form_note && data.form_note.trim()) {
+        processed = processed.replace(/\[フォーム注意書き\]/g, data.form_note.trim());
+    } else {
+        // フォーム注意書きが空の場合は行全体を削除
+        processed = processed.replace(/\[フォーム注意書き\]\s*\n?/g, '');
+    }
     
     // 賞品行の処理（数量付き、日本語プレースホルダー変換前に実行）
     const prizeLines = [
