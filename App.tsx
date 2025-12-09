@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { ClipboardCopy, Sparkles, CheckCircle2, RotateCcw, Trash2 } from 'lucide-react';
+import { ClipboardCopy, Sparkles, CheckCircle2, Trash2 } from 'lucide-react';
 import { Button } from './components/Button';
 import { Card } from './components/Card';
 import { TEMPLATES, FORM_FIELDS, DM_TEMPLATES, FORM_TEMPLATE, ENCLOSED_LETTER_TEMPLATES, getPlatformFromTemplate } from './constants';
@@ -8,12 +8,12 @@ import { generateGuidelines, generateDM, generateForm, generateEnclosedLetter } 
 import { TemplateKey, CampaignData } from './types';
 
 const App: React.FC = () => {
-    // Initialize state with default values from FORM_FIELDS
+    // Initialize state with empty values
     const initialData = useMemo(() => {
         const defaults: CampaignData = {};
         FORM_FIELDS.forEach(field => {
-            // defaultValueが存在する場合はそれを使用、存在しない場合は空文字列
-            defaults[field.id] = field.defaultValue ?? '';
+            // すべてのフィールドを空文字列で初期化
+            defaults[field.id] = '';
         });
         return defaults;
     }, []);
@@ -102,23 +102,6 @@ const App: React.FC = () => {
         }
     };
 
-    const resetForm = () => {
-        if (confirm('入力内容を初期値に戻しますか？')) {
-            setFormData(initialData);
-            setGenerateFormats({
-                tos: true,
-                dm: true,
-                form: true,
-                enclosedLetter: true,
-            });
-            setContactMethod('DM');
-            setTosOutput('');
-            setDmOutput('');
-            setFormOutput('');
-            setEnclosedLetterOutput('');
-        }
-    };
-
     const clearForm = () => {
         if (confirm('入力内容を全てクリアしますか？')) {
             // 全てのフィールドを空にする
@@ -155,9 +138,9 @@ const App: React.FC = () => {
         
         return Object.entries(TEMPLATES).filter(([key]) => {
             if (selectedSocialPlatform === 'X') {
-                return key === 'X/事後抽選' || key === 'X/即時';
+                return key === 'X/事後抽選' || key === 'X/即時' || key === 'X/第一三共' || key === 'X/花王';
             } else if (selectedSocialPlatform === 'IG') {
-                return key === 'IG/事後抽選';
+                return key === 'IG/事後抽選' || key === 'IG/第一三共' || key === 'IG/花王';
             } else if (selectedSocialPlatform === 'TikTok') {
                 return key === 'TikTok/事後抽選';
             }
@@ -195,6 +178,7 @@ const App: React.FC = () => {
             prizes: FORM_FIELDS.filter(f => f.group === 'prizes'),
             steps: FORM_FIELDS.filter(f => f.group === 'steps'),
             social: socialFields,
+            custom: FORM_FIELDS.filter(f => f.group === 'custom'),
         };
         return groups;
     }, [selectedSocialPlatform]);
@@ -495,9 +479,6 @@ const App: React.FC = () => {
                         <Button variant="outline" size="sm" onClick={clearForm} icon={<Trash2 size={14} />}>
                             クリア
                         </Button>
-                    <Button variant="outline" size="sm" onClick={resetForm} icon={<RotateCcw size={14} />}>
-                        リセット
-                    </Button>
                     </div>
                 </div>
             </header>
@@ -549,6 +530,79 @@ const App: React.FC = () => {
                                             placeholder="example@example.com"
                                         />
                                     </div>
+                                </div>
+                            </div>
+                        </Card>
+
+                    {/* カスタム入力 */}
+                        <Card title="カスタム入力">
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* 問い合わせ期間（開始） - 日付のみ */}
+                                    {groupedFields.custom.find(f => f.id === 'contact_period_start_date') && (
+                                        <div className="col-span-1">
+                                            <label className="block text-xs font-bold text-gray-700 mb-1">
+                                                問い合わせ期間（開始）
+                                            </label>
+                                            <input
+                                                type="date"
+                                                id="contact_period_start_date"
+                                                value={formData.contact_period_start_date || ''}
+                                                onChange={(e) => handleInputChange('contact_period_start_date', e.target.value)}
+                                                className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
+                                            />
+                                        </div>
+                                    )}
+                                    
+                                    {/* 問い合わせ期間（終了） - 日付のみ */}
+                                    {groupedFields.custom.find(f => f.id === 'contact_period_end_date') && (
+                                        <div className="col-span-1">
+                                            <label className="block text-xs font-bold text-gray-700 mb-1">
+                                                問い合わせ期間（終了）
+                                            </label>
+                                            <input
+                                                type="date"
+                                                id="contact_period_end_date"
+                                                value={formData.contact_period_end_date || ''}
+                                                onChange={(e) => handleInputChange('contact_period_end_date', e.target.value)}
+                                                className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
+                                            />
+                                        </div>
+                                    )}
+                                    
+                                    {/* 当選者用フォームの注意書き */}
+                                    {groupedFields.custom.find(f => f.id === 'form_note') && (
+                                        <div className="col-span-1 md:col-span-2">
+                                            <label className="block text-xs font-bold text-gray-700 mb-1">
+                                                当選者用フォームの注意書き
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="form_note"
+                                                value={formData.form_note || ''}
+                                                onChange={(e) => handleInputChange('form_note', e.target.value)}
+                                                className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
+                                                placeholder={FORM_FIELDS.find(f => f.id === 'form_note')?.placeholder}
+                                            />
+                                        </div>
+                                    )}
+                                    
+                                    {/* 当選率アップ文言 */}
+                                    {groupedFields.custom.find(f => f.id === 'win_rate_up_text') && (
+                                        <div className="col-span-1 md:col-span-2">
+                                            <label className="block text-xs font-bold text-gray-700 mb-1">
+                                                当選率アップ文言
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="win_rate_up_text"
+                                                value={formData.win_rate_up_text || ''}
+                                                onChange={(e) => handleInputChange('win_rate_up_text', e.target.value)}
+                                                className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
+                                                placeholder={FORM_FIELDS.find(f => f.id === 'win_rate_up_text')?.placeholder}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </Card>

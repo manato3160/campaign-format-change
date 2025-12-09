@@ -39,6 +39,9 @@ const PLACEHOLDER_MAPPING: Record<string, string> = {
     '[応募方法_STEP3]': '[step_3]',
     '[応募方法_STEP4]': '[step_4]',
     '[応募方法_STEP5]': '[step_5]',
+    '[当選率アップ文言]': '[win_rate_up_text]',
+    '[問い合わせ期間開始]': '[contact_period_start]',
+    '[問い合わせ期間終了]': '[contact_period_end]',
 };
 
 // Markdown記号を削除してWordに貼り付け可能な形式に変換
@@ -91,19 +94,28 @@ const parseDate = (dateStr: string): Date => {
 };
 
 // 日付と時間を結合して表示形式に変換（曜日を含む）
-const formatDateTime = (date: string, hour: string = '', minute: string = ''): string => {
+const formatDateTime = (
+    date: string,
+    hour: string = '',
+    minute: string = '',
+    forceTime: boolean = false,
+    defaultHour: string = '00',
+    defaultMinute: string = '00'
+): string => {
     if (!date) return '';
     const dateObj = parseDate(date);
     const year = dateObj.getFullYear();
     const month = dateObj.getMonth() + 1;
     const day = dateObj.getDate();
     const weekday = getWeekday(dateObj);
-    
-    // hourとminuteが存在し、空文字列でない場合に時間を表示
-    if (hour !== undefined && hour !== null && hour !== '' && 
-        minute !== undefined && minute !== null && minute !== '') {
-        const formattedHour = hour.padStart(2, '0');
-        const formattedMinute = minute.padStart(2, '0');
+
+    const hasHour = hour !== undefined && hour !== null && hour !== '';
+    const hasMinute = minute !== undefined && minute !== null && minute !== '';
+
+    // forceTimeが指定されている場合はデフォルト値で補完して必ず時間を表示
+    if (forceTime || (hasHour && hasMinute)) {
+        const formattedHour = (hasHour ? hour : defaultHour).padStart(2, '0');
+        const formattedMinute = (hasMinute ? minute : defaultMinute).padStart(2, '0');
         return `${year}年${month}月${day}日（${weekday}）${formattedHour}:${formattedMinute}`;
     }
     return `${year}年${month}月${day}日（${weekday}）`;
@@ -126,21 +138,29 @@ const replacePlaceholders = (template: string, data: CampaignData): string => {
 
     // 日付と時間を結合したフィールドを先に処理
     // start_date + start_time_hour + start_time_minute → start_date
+    // 応募期間は常に時間を表示（時間が入力されていない場合は00:00をデフォルトとして使用）
     if (data.start_date) {
         const formatted = formatDateTime(
             data.start_date,
             data.start_time_hour,
-            data.start_time_minute
+            data.start_time_minute,
+            true,  // forceTimeをtrueにして常に時間を表示
+            '00',  // デフォルト時
+            '00'   // デフォルト分
         );
         processed = processed.replace(/\[start_date\]/g, formatted);
     }
 
     // end_date + end_time_hour + end_time_minute → end_date
+    // 応募期間は常に時間を表示（時間が入力されていない場合は23:59をデフォルトとして使用）
     if (data.end_date) {
         const formatted = formatDateTime(
             data.end_date,
             data.end_time_hour,
-            data.end_time_minute
+            data.end_time_minute,
+            true,  // forceTimeをtrueにして常に時間を表示
+            '23',  // デフォルト時
+            '59'   // デフォルト分
         );
         processed = processed.replace(/\[end_date\]/g, formatted);
     }
@@ -150,7 +170,10 @@ const replacePlaceholders = (template: string, data: CampaignData): string => {
         const formatted = formatDateTime(
             data.form_deadline_date,
             data.form_deadline_hour,
-            data.form_deadline_minute
+            data.form_deadline_minute,
+            true,
+            '23',
+            '59'
         );
         processed = processed.replace(/\[form_deadline\]/g, formatted);
     }
@@ -171,6 +194,18 @@ const replacePlaceholders = (template: string, data: CampaignData): string => {
         processed = processed.replace(/\[shipping_date\]/g, formatted);
     }
 
+    // 問い合わせ期間開始（日付のみ）
+    if (data.contact_period_start_date) {
+        const formatted = formatDate(data.contact_period_start_date);
+        processed = processed.replace(/\[contact_period_start\]/g, formatted);
+    }
+
+    // 問い合わせ期間終了（日付のみ）
+    if (data.contact_period_end_date) {
+        const formatted = formatDate(data.contact_period_end_date);
+        processed = processed.replace(/\[contact_period_end\]/g, formatted);
+    }
+
     // 一般置換（すべての[key]フィールド、ただし上記で処理済みのものは除く）
     Object.keys(data).forEach(key => {
         // 日付・時間関連のフィールドはスキップ
@@ -178,7 +213,8 @@ const replacePlaceholders = (template: string, data: CampaignData): string => {
             key === 'start_date' || key === 'end_date' || 
             key === 'form_deadline_date' || 
             key === 'dm_send_year' || key === 'dm_send_month' || key === 'dm_send_period' ||
-            key === 'shipping_year' || key === 'shipping_month' || key === 'shipping_period') {
+            key === 'shipping_year' || key === 'shipping_month' || key === 'shipping_period' ||
+            key === 'contact_period_start_date' || key === 'contact_period_end_date') {
             return;
         }
         const regex = new RegExp(`\\[${key}\\]`, 'g');
@@ -256,7 +292,7 @@ const processPrizeLines = (template: string, data: CampaignData, includeQuantity
 };
 
 // 賞品リスト表示の処理（規約用、箇条書き形式）
-const processPrizeListDisplay = (template: string, data: CampaignData): string => {
+const processPrizeListDisplay = (template: string, data: CampaignData, templateKey?: TemplateKey): string => {
     let processed = template;
     const prizes = [
         { tag: '\\[賞品名1\\]', quantityTag: '\\[賞品名1数量\\]', content: data.prize_1, quantity: data.prize_1_quantity },
@@ -272,7 +308,10 @@ const processPrizeListDisplay = (template: string, data: CampaignData): string =
         return val && val !== '（不要なら空白）' && val !== '(不要なら空白)';
     });
     const prizeCount = validPrizes.length;
-
+    
+    // 花王テンプレート（X/花王、IG/花王）の場合、商品が複数ある時の特別な形式を適用
+    const isKaoTemplate = templateKey === 'X/花王' || templateKey === 'IG/花王';
+    
     prizes.forEach(prize => {
         const val = prize.content ? prize.content.trim() : '';
         if (val && val !== '（不要なら空白）' && val !== '(不要なら空白)') {
@@ -292,6 +331,70 @@ const processPrizeListDisplay = (template: string, data: CampaignData): string =
             processed = processed.replace(lineToRemove, '');
         }
     });
+    
+    // 花王テンプレートで商品が複数ある場合の処理（商品リスト処理後）
+    if (isKaoTemplate && prizeCount > 1) {
+        // [KAO_PRIZE_FORMAT]が存在する場合のみ処理
+        if (processed.includes('[KAO_PRIZE_FORMAT]')) {
+            // 「応募者の中から抽選で合計[合計人数]名様に以下商品をプレゼント」を「当選者[合計人数]名様に、以下の商品セットをプレゼントいたします。」に置換
+            processed = processed.replace(
+                /応募者の中から抽選で合計\[合計人数\]名様に以下商品をプレゼント/g,
+                '当選者[合計人数]名様に、以下の商品セットをプレゼントいたします。'
+            );
+            // [KAO_PRIZE_FORMAT]を「セット内容」に置換
+            processed = processed.replace(/\[KAO_PRIZE_FORMAT\]/g, 'セット内容');
+        }
+        
+        // 商品リストの最後に「のセット」を追加（必ず実行）
+        // 「### プレゼントの内容」セクションから「### 応募方法」セクションまでの範囲で商品行を探す
+        const lines = processed.split('\n');
+        let prizeSectionStart = -1;
+        let prizeSectionEnd = -1;
+        
+        // 「### プレゼントの内容」セクションの開始位置を探す
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].includes('### プレゼントの内容') || lines[i].includes('プレゼントの内容')) {
+                prizeSectionStart = i;
+                break;
+            }
+        }
+        
+        // 「### 応募方法」セクションの開始位置を探す（プレゼント内容セクションの終了位置）
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].includes('### 応募方法') || lines[i].includes('応募方法')) {
+                prizeSectionEnd = i;
+                break;
+            }
+        }
+        
+        // プレゼント内容セクション内で最後の商品行（・で始まる行）を探す
+        let lastPrizeLineIndex = -1;
+        const searchStart = prizeSectionStart >= 0 ? prizeSectionStart : 0;
+        const searchEnd = prizeSectionEnd >= 0 ? prizeSectionEnd : lines.length;
+        
+        for (let i = searchEnd - 1; i >= searchStart; i--) {
+            const trimmedLine = lines[i].trim();
+            // 「・」で始まり、「セット内容」や「のセット」ではない行を探す
+            if (trimmedLine.startsWith('・') && !trimmedLine.includes('セット内容') && trimmedLine !== 'のセット') {
+                lastPrizeLineIndex = i;
+                break;
+            }
+        }
+        
+        // 「のセット」がまだ追加されていない場合のみ追加
+        if (lastPrizeLineIndex >= 0) {
+            // 次の行をチェックして「のセット」が既にあるか確認
+            const nextLineIndex = lastPrizeLineIndex + 1;
+            const nextLine = nextLineIndex < lines.length ? lines[nextLineIndex].trim() : '';
+            if (nextLine !== 'のセット') {
+                lines.splice(lastPrizeLineIndex + 1, 0, 'のセット');
+                processed = lines.join('\n');
+            }
+        }
+    } else if (processed.includes('[KAO_PRIZE_FORMAT]')) {
+        // 花王テンプレートでも商品が1つ以下の場合、または[KAO_PRIZE_FORMAT]が残っている場合は削除
+        processed = processed.replace(/\[KAO_PRIZE_FORMAT\]\n?/g, '');
+    }
 
     // 賞品の数に応じて「を合計」または「のセットを合計」に変更
     if (prizeCount === 1) {
@@ -318,10 +421,28 @@ export const generateGuidelines = (templateContent: string, data: CampaignData, 
     let processed = templateContent;
     
     // 賞品リスト表示の処理（日本語プレースホルダー変換前に実行）
-    processed = processPrizeListDisplay(processed, data);
+    processed = processPrizeListDisplay(processed, data, templateKey);
     
     // ステップ行の処理（日本語プレースホルダー変換前に実行）
     processed = processStepLines(processed, data);
+    
+    // 当選率アップ文言の処理（空の場合は行を削除）
+    if (data.win_rate_up_text && data.win_rate_up_text.trim()) {
+        processed = processed.replace(/\[当選率アップ文言\]/g, data.win_rate_up_text.trim());
+    } else {
+        processed = processed.replace(/.*\[当選率アップ文言\].*\n?/g, '');
+    }
+    
+    // 問い合わせ期間の処理（空の場合は該当箇所を削除）
+    // この処理は後でreplacePlaceholdersで実行されるため、ここでは削除のみ
+    if (!data.contact_period_end_date) {
+        // 問い合わせ期間終了が空の場合は「開設期間：[問い合わせ期間終了]まで」の行を削除
+        processed = processed.replace(/開設期間：\[問い合わせ期間終了\]まで\s*\n?/g, '');
+    }
+    if (!data.contact_period_start_date || !data.contact_period_end_date) {
+        // 問い合わせ期間開始または終了が空の場合は花王テンプレートの行を削除
+        processed = processed.replace(/\[問い合わせ期間開始\]～\[問い合わせ期間終了\]（土・日・祝日を除く）\s*\n?/g, '');
+    }
     
     // 「X / 即時」テンプレートの場合、DM送付時期の記載を削除
     if (templateKey === 'X/即時') {
@@ -377,6 +498,124 @@ export const generateGuidelines = (templateContent: string, data: CampaignData, 
     
     // Markdown記号を削除してWordに貼り付け可能な形式に変換
     processed = removeMarkdown(processed);
+    
+    // 第一三共テンプレート（X/第一三共、IG/第一三共）の場合、特定の見出しの次の空行を削除
+    const isDaiichiSankyoTemplate = templateKey === 'X/第一三共' || templateKey === 'IG/第一三共';
+    if (isDaiichiSankyoTemplate) {
+        // 指定された見出しの次の行の空行を削除
+        const headingsToClean = [
+            '応募規約',
+            '１．本キャンペーンの概要',
+            '応募期間',
+            '賞品',
+            '当選人数',
+            '対象アカウント',
+            '応募資格',
+            '応募方法',
+            '当選発表',
+            '応募に関する注意事項',
+            '禁止事項',
+            '当選に関する注意事項',
+            '免責事項',
+            '準拠法',
+            '3．個人情報の取り扱いについて',
+            'お問い合わせ'
+        ];
+        
+        headingsToClean.forEach(heading => {
+            // Markdown削除後、見出しの後に続く空行を削除
+            // 「見出し\n\n内容」を「見出し\n内容」に変換
+            const escapedHeading = heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            processed = processed.replace(new RegExp(`(${escapedHeading})\\n\\n`, 'g'), '$1\n');
+        });
+        
+        // 「当選人数」の前の行を1行空行に統一
+        // 行単位で処理して、より確実に空行を調整
+        const lines = processed.split('\n');
+        let tosenNinzuIndex = lines.findIndex(line => line.trim() === '当選人数');
+        if (tosenNinzuIndex > 0) {
+            // 「当選人数」の行が見つかった場合
+            let blankLineCount = 0;
+            // 前の行から空行をカウント
+            for (let i = tosenNinzuIndex - 1; i >= 0; i--) {
+                if (lines[i].trim() === '') {
+                    blankLineCount++;
+                } else {
+                    break;
+                }
+            }
+            
+            // 空行が1行でない場合、調整
+            if (blankLineCount !== 1) {
+                // 既存の空行をすべて削除
+                const startIndex = tosenNinzuIndex - blankLineCount;
+                for (let i = 0; i < blankLineCount; i++) {
+                    lines.splice(startIndex, 1);
+                }
+                // 1行の空行を追加
+                tosenNinzuIndex = startIndex;
+                lines.splice(tosenNinzuIndex, 0, '');
+                processed = lines.join('\n');
+            }
+        }
+    }
+    
+    // 花王テンプレート（X/花王、IG/花王）の場合、特定の見出しの次の空行を削除
+    if (templateKey === 'X/花王' || templateKey === 'IG/花王') {
+        // 指定された見出しの次の行の空行を削除
+        const headingsToClean = [
+            '応募規約',
+            '１．本キャンペーンの概要',
+            '応募期間',
+            'プレゼントの内容',
+            '応募方法',
+            '当選発表',
+            '応募に関する注意事項',
+            '禁止事項',
+            '当選に関する注意事項',
+            '本キャンペーン及び本応募規約の変更等',
+            '当社の責任',
+            'その他',
+            '３．個人情報の取り扱いについて',
+            '４．本キャンペーンについてのお問合わせ'
+        ];
+        
+        headingsToClean.forEach(heading => {
+            // Markdown削除後、見出しの後に続く空行を削除
+            // 「見出し\n\n内容」を「見出し\n内容」に変換
+            const escapedHeading = heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            processed = processed.replace(new RegExp(`(${escapedHeading})\\n\\n`, 'g'), '$1\n');
+        });
+        
+        // 「応募方法」の前の行を1行空行に統一
+        const lines = processed.split('\n');
+        let oboHouhouIndex = lines.findIndex(line => line.trim() === '応募方法');
+        if (oboHouhouIndex > 0) {
+            // 「応募方法」の行が見つかった場合
+            let blankLineCount = 0;
+            // 前の行から空行をカウント
+            for (let i = oboHouhouIndex - 1; i >= 0; i--) {
+                if (lines[i].trim() === '') {
+                    blankLineCount++;
+                } else {
+                    break;
+                }
+            }
+            
+            // 空行が1行でない場合、調整
+            if (blankLineCount !== 1) {
+                // 既存の空行をすべて削除
+                const startIndex = oboHouhouIndex - blankLineCount;
+                for (let i = 0; i < blankLineCount; i++) {
+                    lines.splice(startIndex, 1);
+                }
+                // 1行の空行を追加
+                oboHouhouIndex = startIndex;
+                lines.splice(oboHouhouIndex, 0, '');
+                processed = lines.join('\n');
+            }
+        }
+    }
 
     return processed.trim();
 };
