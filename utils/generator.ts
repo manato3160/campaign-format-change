@@ -457,8 +457,41 @@ export const generateGuidelines = (templateContent: string, data: CampaignData, 
     if (contactMethod === 'email') {
         // DM用の記載をメール用に置換
         const platform = templateKey ? getPlatformFromTemplate(templateKey) : null;
+        const isDaiichiSankyoTemplate = templateKey === 'X/第一三共' || templateKey === 'IG/第一三共';
+        const isKaoTemplate = templateKey === 'X/花王' || templateKey === 'IG/花王';
+        
         if (platform) {
-            // 各プラットフォームのDM用記載をメール用に置換
+            // 第一三共テンプレート用の変換（[Xアカウント名]「[XアカウントID]」形式）
+            if (isDaiichiSankyoTemplate) {
+                if (platform === 'X') {
+                    processed = processed.replace(
+                        /\[Xアカウント名\]「\[XアカウントID\]」へダイレクトメッセージでお問い合わせください。/g,
+                        '[お問い合わせメールアドレス]へメールでお問い合わせください。'
+                    );
+                } else if (platform === 'IG') {
+                    processed = processed.replace(
+                        /\[IGアカウント名\]「\[IGアカウントID\]」へダイレクトメッセージでお問い合わせください。/g,
+                        '[お問い合わせメールアドレス]へメールでお問い合わせください。'
+                    );
+                }
+            }
+            
+            // 花王テンプレート用の変換（[Xアカウント名]「[XアカウントID]」形式）
+            if (isKaoTemplate) {
+                if (platform === 'X') {
+                    processed = processed.replace(
+                        /\[Xアカウント名\]「\[XアカウントID\]」へダイレクトメッセージでお問い合わせください。/g,
+                        '[お問い合わせメールアドレス]へメールでお問い合わせください。'
+                    );
+                } else if (platform === 'IG') {
+                    processed = processed.replace(
+                        /\[IGアカウント名\]「\[IGアカウントID\]」へダイレクトメッセージでお問い合わせください。/g,
+                        '[お問い合わせメールアドレス]へメールでお問い合わせください。'
+                    );
+                }
+            }
+            
+            // 各プラットフォームのDM用記載をメール用に置換（通常テンプレート用）
             if (platform === 'X' || platform === 'IG_X') {
                 processed = processed.replace(
                     /\[キャンペーン名\]公式Xアカウント「\[XアカウントID\]」へダイレクトメッセージでお問い合わせください。/g,
